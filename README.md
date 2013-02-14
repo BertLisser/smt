@@ -15,8 +15,8 @@ console and rascal parsers. For now Rascal modules should be located
 always in the "src" folder
 
 
-In this  case the smt project this already done.
+In the case of the smt project this already done.
 The only thing what you have to do is: import the project from repository smt.
 
 
-You can solve a example sudoku by running the main van sudoku/Sudoku.rsc. 
+You can solve an example sudoku by running the main van sudoku/Sudoku.rsc. 
