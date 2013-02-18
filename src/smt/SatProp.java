@@ -45,6 +45,7 @@ public class SatProp {
 	private ModelIterator modelIterator = new ModelIterator(solver);
 	private HashMap<String, Integer> str2int = new HashMap<String, Integer>();
 	private ArrayList<String> int2str = new ArrayList<String>();
+	private int freeVar=0;
 
 	public SatProp(IValueFactory values) {
 		super();
@@ -93,62 +94,51 @@ public class SatProp {
 	// return values.bool(r);
 	// }
 
-	public int createGate(int fv, IConstructor c) throws ContradictionException {
+	public int createGate(IConstructor c) throws ContradictionException {
+		if (c.getName().equals("v")) {
+			IString s = (IString) c.get(0);
+			return str2int.get(s.getValue());
+		}
+		int fv = (freeVar++);
 		if (c.getName().equals("false"))
 			gateTranslator.gateFalse(fv);
 		else if (c.getName().equals("true"))
 			gateTranslator.gateTrue(fv);
-		else if (c.getName().equals("v")) {
-			IString s = (IString) c.get(0);
-			return str2int.get(s.getValue());
-		} else if (c.getName().equals("not")) {
-			gateTranslator.not(fv, createGate(fv + 1, (IConstructor) c.get(0)));
+		else if (c.getName().equals("not")) {
+			gateTranslator.not(fv, createGate((IConstructor) c.get(0)));
 		} else if (c.getName().equals("and")) {
 			ISet s = ((ISet) c.get(0));
-			int newfv = fv;
 			VecInt v = new VecInt(s.size());
 			for (IValue e : s) {
-				int d = createGate(newfv+1, (IConstructor) e);
+				int d = createGate((IConstructor) e);
 				v.push(d);
-				if (d > newfv)
-					newfv = d;
 			}
 			gateTranslator.and(fv, v);
 		} else if (c.getName().equals("or")) {
 			ISet s = ((ISet) c.get(0));
-			int newfv = fv;
 			VecInt v = new VecInt(s.size());
 			for (IValue e : s) {
-				int d = createGate(newfv + 1, (IConstructor) e);
+				int d = createGate((IConstructor) e);
 				v.push(d);
-				if (d > newfv)
-					newfv = d;
 			}
 			gateTranslator.or(fv, v);
 		} else if (c.getName().equals("iff")) {
 			IConstructor a1 = ((IConstructor) c.get(0));
 			IConstructor a2 = ((IConstructor) c.get(1));
-			int newfv = fv;
 			VecInt v = new VecInt(2);
-			int d1 = createGate(newfv + 1, a1);
+			int d1 = createGate(a1);
 			v.push(d1);
-			if (d1 > newfv)
-				newfv = d1;
-			int d2 = createGate(newfv + 1, a2);
+			int d2 = createGate(a2);
 			v.push(d2);
 			gateTranslator.iff(fv, v);
 		} else if (c.getName().equals("if")) {
 			IConstructor a1 = ((IConstructor) c.get(0));
 			IConstructor a2 = ((IConstructor) c.get(1));
-			int newfv = fv;
-			int d1 = createGate(newfv + 1, a1);
-			if (d1 > newfv)
-				newfv = d1;
-			int d2 = createGate(newfv + 1, a2);
-			if (d2 > newfv)
-				newfv = d2;
-			gateTranslator.gateTrue(newfv + 1);
-			gateTranslator.ite(fv, d1, d2, newfv + 1);
+			int d1 = createGate(a1);
+			int d2 = createGate(a2);
+			int fv1 = freeVar++;
+			gateTranslator.gateTrue(fv1);
+			gateTranslator.ite(fv, d1, d2, fv1);
 		}
 		return fv;
 	}
@@ -156,7 +146,7 @@ public class SatProp {
 	private void gateReset(IList vars, IConstructor c)
 			throws ContradictionException {
 		gateTranslator.reset();
-		gateTranslator.newVar(vars.length());
+		gateTranslator.newVar(vars.length()+100);
 		int i = 1;
 		str2int.clear();
 		int2str.clear();
@@ -166,7 +156,8 @@ public class SatProp {
 			int2str.add(((IString) v).getValue());
 			i++;
 		}
-		gateTranslator.gateTrue(createGate(vars.length() + 1, c));
+		freeVar = vars.length()+1;
+		gateTranslator.gateTrue(createGate(c));
 	}
 
 	public IBool isSatisfiable(IList vars, IConstructor c, IEvaluatorContext ctx) {
@@ -217,6 +208,7 @@ public class SatProp {
 			modelIterator.reset();
 			gateReset(vars, c);	
 			for (;maxSol > 0 && modelIterator.isSatisfiable();maxSol--) {
+				// System.err.println("findModel:"+maxSol);
 				IListWriter w = values.listWriter();
 				int[] m = modelIterator.model();
 				for (int z : m) {
