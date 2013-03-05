@@ -12,6 +12,7 @@ data Formula
   = \true()
   | \false()
   | v(str x)
+  | \eq(str \var, str \constant)
   | \not(Formula arg)
   | \and(Formula lhs, Formula rhs)
   | \and(set[Formula] args)
@@ -28,3 +29,8 @@ public Formula and(Formula a, Formula b) = and({a,b});
 public Formula or(Formula a, Formula b) = or({a,b});
 public Formula and({set[Formula] a, and(set[Formula] b)}) = and(a + b);
 public Formula or({set[Formula] a, or(set[Formula] b)}) = or(a + b);
+
+
+
+
+

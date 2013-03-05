@@ -6,7 +6,7 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: smt.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- rascal_eclipse;bundle-version="0.6.0"
+ rascal;bundle-version="0.6.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.eclipse.imp.pdb.facts,
@@ -16,3 +16,4 @@ Import-Package: org.eclipse.imp.pdb.facts,
  org.sat4j.minisat;version="2.3.0.v20110329",
  org.sat4j.specs;version="2.3.0.v20110329",
  org.sat4j.tools;version="2.3.0.v20110329"
+
