@@ -24,12 +24,13 @@ rel[S, S] R = {<<1,1>,<0,1>>, <<0,1>,<1,1>>,
 Kripke[S] M = <s, s0, R, L, label>;
 
 public DotGraph toDot(Kripke[&T] m) {
-    list[Stm] stms = [E("<r[0]>", "<r[1]>")|r<-m.r];
+    list[Stm] stms = [N("<s>",[<"label", "<m.id(s)>">])|&T s<-m.s]
+    +[E("<r[0]>", "<r[1]>")|r<-m.r];
     return digraph("kripke", stms);
     }
 
 public void main() {
-   println(toString(toDot(M)));
+   println(toDot(M));
    dotDisplay(toDot(M));   
 }
 
