@@ -3,7 +3,7 @@ module Pico
 import Prelude;
 import util::IDE;
 
-import vis::Figure;
+// import vis::Figure;
 // import vis::Render;
 
 import demo::lang::Pico::Abstract;
@@ -14,6 +14,7 @@ import demo::lang::Pico::Compile;
 import demo::lang::Pico::ControlFlow;
 import demo::lang::Pico::Uninit;
 import demo::lang::Pico::Visualize;
+import Concur;
 
 //  define the language name and extension
 
@@ -71,7 +72,7 @@ public set[Contribution] Pico_CONTRIBS = {
 		menu("Pico",[
 		    action("Evaluate Pico program", evalPicoProgram),
     		action("Compile Pico to ASM", compilePicoProgram),
-    		action("Show Control flow graph", visualizePicoProgram)
+    		action("Show Control flow graph", visualize)
 	    ])
   	)
 };

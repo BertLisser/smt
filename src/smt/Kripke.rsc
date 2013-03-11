@@ -28,6 +28,7 @@ public DotGraph toDot(Kripke[&T] m) {
     +[E("<r[0]>", "<r[1]>")|r<-m.r];
     return digraph("kripke", stms);
     }
+    
 
 public void main() {
    println(toDot(M));

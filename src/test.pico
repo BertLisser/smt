@@ -1,0 +1,4 @@
+begin declare turn : natural;
+while turn do
+od
+end

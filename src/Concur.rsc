@@ -4,16 +4,12 @@ import smt::Kripke;
 import lang::dot::Dot;
 import dotplugin::Display;
 import demo::lang::Pico::Abstract;
-import demo::lang::Pico::ControlFlow;
+import ControlFlow;
 import demo::lang::Pico::Syntax;
 import  analysis::graphs::Graph;
 
-str input = readFile(|project://smt/src/concur.pico|);
-
-map[CFNode, str] loc2lab = ();
-
-int idcf(CFNode n) {
-   switch (n) {
+int idcf(CFNode nod) {
+   switch (nod) {
       case entry(loc x): return x.offset;
       case exit():  return -1;
       case choice(loc x, EXP exp): return x.offset;
@@ -22,8 +18,8 @@ int idcf(CFNode n) {
    return -2;   
    }
 
-str labcf(CFNode n) {
-   switch (n) {
+str labcf(CFNode nod, str input) {
+   switch (nod) {
       case entry(loc x): return "entry";
       case exit():  return "exit";
       case choice(loc x, EXP exp): return substring(input, x.offset, x.offset+x.length);
@@ -31,29 +27,29 @@ str labcf(CFNode n) {
    }
    return "";   
    }
-   
-str labcf(int n) {
-   return labcf(nodes[n]);
-   }
-   
+     
 bool pred(int n) {
    return true;
    }
    
-map[int, CFNode] nodes =();
-
-public void main() {
-   // println(input);
-   Program p = parse(#Program, input);
-   PROGRAM m = implode(#PROGRAM, p);
+public void visualize(Program x , loc f) {
+   PROGRAM m = implode(#PROGRAM, x);
+   str input = unparse(x);
    CFGraph CFG = cflowProgram(m);
-   nodes = (idcf(k):k|CFNode k<-carrier(CFG.graph));
+   map[int, str] nodes =(idcf(k):labcf(k, input)|CFNode k<-carrier(CFG.graph));
+   nodes = (idcf(k):labcf(k, input)|CFNode k<-carrier(CFG.graph));
    set[int] entries = {idcf(k)|CFNode k<-carrier(CFG.graph), entry(_):=k};
    rel[int, int] r = {<idcf(g.from), idcf(g.to)>|g<-CFG.graph};
+   str labcf(int n) = nodes[n];
    Kripke[int] M = <domain(nodes), entries, 
                  r, pred, labcf>;
    println(toDot(M));
    dotDisplay(toDot(M)); 
+   }
+   
+public void main() {
+   Program p = parse(#Program,|project://smt/src/test.pico|);
+   visualize(p, |file:///|);
 }
 
 
