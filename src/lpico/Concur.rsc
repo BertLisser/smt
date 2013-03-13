@@ -3,9 +3,9 @@ import Prelude;
 import smt::Kripke;
 import lang::dot::Dot;
 import dotplugin::Display;
-import demo::lang::Pico::Abstract;
-//import lpico::ControlFlow;
-import demo::lang::Pico::Syntax;
+import lpico::Abstract;
+import lpico::ControlFlow;
+import lpico::Syntax;
 import  analysis::graphs::Graph;
 
 int idcf(CFNode nod) {
@@ -13,7 +13,7 @@ int idcf(CFNode nod) {
       case entry(loc x): return x.offset;
       case exit():  return -1;
       case choice(loc x, EXP exp): return x.offset;
-      case statement(loc x, LSTATEMENT  stat):  return x.offset;
+      case statement(loc x, LSTATEMENT  lstat):  return x.offset;
    }
    
    return -2;   
@@ -24,7 +24,7 @@ str labcf(CFNode nod, str input) {
       case entry(loc x): return "entry";
       case exit():  return "exit";
       case choice(loc x, EXP exp): return substring(input, x.offset, x.offset+x.length);
-      case statement(loc x, STATEMENT  stat):  return substring(input, x.offset, x.offset+x.length);
+      case statement(loc x, LSTATEMENT  lstat):  return "<lstat.name>:<substring(input, x.offset, x.offset+x.length)>";
    }
    return "";   
    }
@@ -44,12 +44,12 @@ public void visualize(Program x , loc f) {
    str labcf(int n) = nodes[n];
    Kripke[int] M = <domain(nodes), entries, 
                  r, pred, labcf>;
-   println(toDot(M));
+   // println(toDot(M));
    dotDisplay(toDot(M)); 
    }
    
 public void main() {
-   Program p = parse(#Program,|project://smt/src/test.pico|);
+   Program p = parse(#Program,|project://smt/src/lpico/test.lpic|);
    visualize(p, |file:///|);
 }
 
