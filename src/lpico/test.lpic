@@ -1,6 +1,6 @@
-begin declare  turn : natural;  
-      l0: while 1 do 
-          nc0: while turn-1 do  od; 
-          cr0: turn:=1
-      od
+begin declare natural turn= 0; 
+       L0: while 1 do 
+          NC0: while turn do  od; 
+          CR0: turn:=1
+      od 
 end

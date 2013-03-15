@@ -8,7 +8,7 @@ public data PROGRAM =                       /*3*/
   program(list[DECL] decls, list[LSTATEMENT] lstats);
 
 public data DECL =
-  decl(PicoId name, TYPE tp);
+  decl(TYPE tp, PicoId name, EXP exp);
 
 public data EXP = 
        id(PicoId name)

@@ -10,20 +10,28 @@ import  analysis::graphs::Graph;
 
 int idcf(CFNode nod) {
    switch (nod) {
-      case entry(loc x): return x.offset;
+      case entry(loc x, _): return x.offset;
       case exit():  return -1;
-      case choice(loc x, EXP exp): return x.offset;
-      case statement(loc x, LSTATEMENT  lstat):  return x.offset;
+      case choice(loc x, _, _): return x.offset;
+      case statement(loc x, _):  return x.offset;
    }
    
    return -2;   
    }
+   
+str labdecl(DECL d) {
+   if (decl(TYPE tp, PicoId name, natCon(int v)):=d) {
+        return "<name>=<v>";
+        }
+   else return ".";
+}
 
 str labcf(CFNode nod, str input) {
    switch (nod) {
-      case entry(loc x): return "entry";
+      case entry(loc x, list[DECL] decls): return "entry:<for (d<-decls) {> <labdecl(d)> <}>";
       case exit():  return "exit";
-      case choice(loc x, EXP exp): return substring(input, x.offset, x.offset+x.length);
+      case choice(loc x,PicoId id,  EXP exp): return id;
+      /*"<id>:<substring(input, x.offset, x.offset+x.length)>";*/
       case statement(loc x, LSTATEMENT  lstat):  return "<lstat.name>:<substring(input, x.offset, x.offset+x.length)>";
    }
    return "";   
