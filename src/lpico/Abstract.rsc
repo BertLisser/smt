@@ -3,6 +3,10 @@ module lpico::Abstract
 public data TYPE = natural() | string();    /*1*/
 	  
 public alias PicoId = str;                  /*2*/
+
+public data PROGRAMS = 
+  programs(list[PROGRAM] prgs);
+
 	  
 public data PROGRAM =                       /*3*/
   program(list[DECL] decls, list[LSTATEMENT] lstats);
@@ -16,7 +20,7 @@ public data EXP =
      | strCon(str sVal)
      | add(EXP left, EXP right)
      | sub(EXP left, EXP right)
-     | conc(EXP left, EXP right)
+     | eq(EXP left, EXP right)
      ;
      
 public data LSTATEMENT =
@@ -27,10 +31,12 @@ public data STATEMENT =
        asgStat(PicoId name, EXP exp)
      | ifElseStat(EXP exp, list[LSTATEMENT] thenPart, list[LSTATEMENT] elsePart)
      | whileStat(EXP exp, list[LSTATEMENT] lstats)
+     | waitStat(EXP exp)
      ;
 
 anno loc TYPE@location;                   /*4*/
 anno loc PROGRAM@location;
+anno loc PROGRAMS@location;
 anno loc DECL@location;
 anno loc EXP@location;
 anno loc STATEMENT@location;

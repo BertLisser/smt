@@ -1,6 +1,16 @@
-begin declare natural turn= 0; 
-       L0: while 1 do 
-          NC0: while turn do  od; 
+
+cobegin
+begin declare natural turn := 0; 
+       L0: while True do 
+          NC0: wait (turn = 0); 
           CR0: turn:=1
       od 
+end;
+begin declare natural turn := 1; 
+       L1: while True do 
+          NC1: wait (turn = 0); 
+          CR1: turn:=1
+      od 
 end
+coend
+

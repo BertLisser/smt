@@ -41,6 +41,12 @@ CFGraph cflowStat(lstatement(PicoId id, whileStat(EXP Exp, list[LSTATEMENT] Stat
    return r;
 }
 
+CFGraph cflowStat(lstatement(PicoId id, waitStat(EXP Exp))) { 
+   E = {choice(Exp@location, id, Exp)}; 
+   CFNode e =  getOneFrom(E);
+   return <E,{<e,e>}, E>;
+}
+
 CFGraph cflowStats(list[LSTATEMENT] Stats){                                        /*6*/
   if(size(Stats) == 1)
      return cflowStat(Stats[0]);
@@ -59,6 +65,23 @@ public CFGraph cflowProgram(PROGRAM P){                                         
   } else
     throw "Cannot happen";
 }
+
+CFGraph jon(list[CFGraph] CF) {
+    r = {};
+    Graph[CFNode] q = {};
+    for (g<-CF) {
+        r+=g.entry;
+        q+=g.graph;
+        }
+    return <r, q, {}>;
+    }
+ 
+ public CFGraph cflowPrograms(PROGRAMS P){
+    if (programs(list[PROGRAM] q):=P) 
+        return jon([cflowProgram(p)|p<-q]);
+    return <{}, [], {}>;
+    }   
+
 
 public CFGraph cflowProgram(str txt) = cflowProgram(load(txt));                   /*8*/
 

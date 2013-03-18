@@ -8,6 +8,7 @@ import lpico::ControlFlow;
 import lpico::Syntax;
 import  analysis::graphs::Graph;
 
+
 int idcf(CFNode nod) {
    switch (nod) {
       case entry(loc x, _): return x.offset;
@@ -41,10 +42,11 @@ bool pred(int n) {
    return true;
    }
    
-public void visualize(Program x , loc f) {
-   PROGRAM m = implode(#PROGRAM, x);
+public void visualize(Programs x , loc f) {
    str input = unparse(x);
-   CFGraph CFG = cflowProgram(m);
+   // println(x);
+   PROGRAMS m = implode(#PROGRAMS, x);
+   CFGraph CFG = cflowPrograms(m);
    map[int, str] nodes =(idcf(k):labcf(k, input)|CFNode k<-carrier(CFG.graph));
    nodes = (idcf(k):labcf(k, input)|CFNode k<-carrier(CFG.graph));
    set[int] entries = {idcf(k)|CFNode k<-carrier(CFG.graph), entry(_):=k};
@@ -57,7 +59,7 @@ public void visualize(Program x , loc f) {
    }
    
 public void main() {
-   Program p = parse(#Program,|project://smt/src/lpico/test.lpic|);
+   Programs p = parse(#Programs,|project://smt/src/lpico/test.lpic|);
    visualize(p, |file:///|);
 }
 

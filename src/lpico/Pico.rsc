@@ -12,8 +12,8 @@ import lpico::Syntax;
 
 import lpico::ControlFlow;
 import demo::lang::Pico::Uninit;
-import demo::lang::Pico::Visualize;
-import lpico::Concur;
+// import demo::lang::Pico::Visualize;
+// import lpico::Concur;
 
 //  define the language name and extension
 
@@ -22,14 +22,14 @@ private str Pico_EXT = "lpic";
 
 //  Define the connection with the Pico parser
 Tree parser(str x, loc l) {
-    return parse(#Program, x, l);
+    return parse(#start[Programs], x, l);
 }
 
 //  Define connection with the Pico checkers
 // (includes type checking and uninitialized variables check)
 
 public Program checkPicoProgram(Program x) {
-	p = implode(#PROGRAM, x);
+	PROGRAMS p = implode(#PROGRAMS, x);
 	env = checkProgram(p);
 	errors = { error(v, l) | <loc l, PicoId v> <- env.errors };
 	if(!isEmpty(errors))
@@ -44,7 +44,7 @@ public Program checkPicoProgram(Program x) {
 //  Define connection with CFG visualization
 
 public void visualizePicoProgram(Program x, loc selection) {
-	m = implode(#PROGRAM, x); 
+	m = implode(#PROGRAMS, x); 
 	CFG = cflowProgram(m);
 	text("dag");
 	// render(visCFG(CFG.graph));

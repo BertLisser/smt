@@ -13,14 +13,16 @@ lexical WhitespaceAndComment
    | @category="Comment" "%" ![%]+ "%"
    | @category="Comment" "%%" ![\n]* $
    ;
+   
+start syntax Programs = programs: "cobegin" {Program ";"}* prgs "coend" ;
 
-start syntax Program 
+syntax Program 
    = program: "begin" Declarations decls {LabeledStatement  ";"}* body "end" ;
 
 syntax Declarations 
    = "declare" {Declaration ","}* decls ";" ;  
  
-syntax Declaration = decl: Type tp Id id "=" Expression ;
+syntax Declaration = decl: Type tp Id id ":=" Expression ;
 
 syntax Type 
    = natural:"natural" 
@@ -35,14 +37,16 @@ syntax Statement
    = asgStat: Id var ":="  Expression val 
    | ifElseStat: "if" Expression cond "then" {LabeledStatement ";"}*  thenPart "else" {LabeledStatement ";"}* elsePart "fi"
    | whileStat: "while" Expression cond "do" {LabeledStatement ";"}* body "od"
+   | waitStat:  "wait" Expression cond
    ;  
+   
      
 syntax Expression 
    = id: Id name
    | strCon: String string
    | natCon: Natural natcon
    | bracket "(" Expression e ")"
-   > left conc: Expression lhs "||" Expression rhs
+   > left eq: Expression lhs "=" Expression rhs
    > left ( add: Expression lhs "+" Expression rhs
           | sub: Expression lhs "-" Expression rhs
           )
