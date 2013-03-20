@@ -1,4 +1,3 @@
-
 cobegin
 begin declare natural turn := 0; 
        L0: while True do 
@@ -8,9 +7,8 @@ begin declare natural turn := 0;
 end;
 begin declare natural turn := 1; 
        L1: while True do 
-          NC1: wait (turn = 0); 
-          CR1: turn:=1
+          NC1: wait (turn = 1); 
+          CR1: turn:=0
       od 
 end
 coend
-

@@ -17,17 +17,20 @@ package smt;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.eclipse.imp.pdb.facts.IBool;
 import org.eclipse.imp.pdb.facts.IConstructor;
 import org.eclipse.imp.pdb.facts.IInteger;
 import org.eclipse.imp.pdb.facts.IList;
 import org.eclipse.imp.pdb.facts.ISet;
+import org.eclipse.imp.pdb.facts.ISetWriter;
 import org.eclipse.imp.pdb.facts.IString;
 import org.eclipse.imp.pdb.facts.IListWriter;
 import org.eclipse.imp.pdb.facts.IValue;
 import org.eclipse.imp.pdb.facts.IValueFactory;
 import org.eclipse.imp.pdb.facts.exceptions.FactTypeUseException;
+import org.eclipse.imp.pdb.facts.type.Type;
 import org.rascalmpl.interpreter.IEvaluatorContext;
 import org.sat4j.core.VecInt;
 import org.sat4j.minisat.SolverFactory;
@@ -39,7 +42,6 @@ import org.sat4j.tools.ModelIterator;
 
 public class SatProp {
 	final int width = 6;
-	private int[] domainCode = new int[width];
 	private final IValueFactory values;
 	private ISolver solver = SolverFactory.newDefault();
 	private GateTranslator gateTranslator = new GateTranslator(solver);
@@ -51,6 +53,59 @@ public class SatProp {
 	final private HashMap<String, int[]> variables = new HashMap<String, int[]>();
 	private int startVar = 1;
 	private int freeVar = 0;
+	IConstructor domainConstraint;
+
+	IConstructor getAndConstructor(IEvaluatorContext ctx, IValue... args) {
+		ISetWriter w = values.setWriter();
+		w.insert(args);
+		return getAndConstructor(ctx, w.done());
+	}
+
+	IConstructor getAndConstructor(IEvaluatorContext ctx, ISet args) {
+		Set<Type> cs = ctx.getCurrentEnvt().lookupConstructors("and");
+		for (Type t : cs) {
+			if (t.isConstructorType() && t.getArity() > 0) {
+				if (t.getFieldType(0).isSetType()) {
+					return values.constructor(t, args);
+				}
+			}
+		}
+		return null;
+	}
+
+	IConstructor getOrConstructor(IEvaluatorContext ctx, IValue... args) {
+		ISetWriter w = values.setWriter();
+		w.insert(args);
+		return getOrConstructor(ctx, w.done());
+	}
+
+	IConstructor getOrConstructor(IEvaluatorContext ctx, ISet args) {
+		Set<Type> cs = ctx.getCurrentEnvt().lookupConstructors("or");
+		for (Type t : cs) {
+			if (t.isConstructorType() && t.getArity() > 0) {
+				if (t.getFieldType(0).isSetType()) {
+					return values.constructor(t, args);
+				}
+			}
+		}
+		return null;
+	}
+
+	IConstructor getEqConstructor(IEvaluatorContext ctx, String varName,
+			String constName) {
+		Set<Type> cs = ctx.getCurrentEnvt().lookupConstructors("eq");
+		for (Type t : cs) {
+			if (t.isConstructorType() && t.getArity() == 2) {
+				IString var = values.string(varName);
+				IString constant = values.string(constName);
+				if (t.getFieldType(0).isStringType()
+						&& t.getFieldType(1).isStringType()) {
+					return values.constructor(t, var, constant);
+				}
+			}
+		}
+		return null;
+	}
 
 	public SatProp(IValueFactory values) {
 		super();
@@ -163,7 +218,7 @@ public class SatProp {
 		return fv;
 	}
 
-	private void gateReset(IList vars, IConstructor c)
+	private void gateReset(IList vars, IConstructor c, IEvaluatorContext ctx)
 			throws ContradictionException {
 		gateTranslator.reset();
 		gateTranslator.newVar(vars.length() + 100);
@@ -190,12 +245,14 @@ public class SatProp {
 			int2str.put(freeVar, ((IString) v).getValue());
 			freeVar++;
 		}
+		if (domainConstraint != null)
+			c = getAndConstructor(ctx, c, domainConstraint);
 		gateTranslator.gateTrue(createGate(c));
 	}
 
 	public IBool isSatisfiable(IList vars, IConstructor c, IEvaluatorContext ctx) {
 		try {
-			gateReset(vars, c);
+			gateReset(vars, c, ctx);
 			return values.bool(gateTranslator.isSatisfiable());
 		} catch (ContradictionException e) {
 			// TODO Auto-generated catch block
@@ -239,18 +296,32 @@ public class SatProp {
 		IListWriter x = values.listWriter();
 		try {
 			modelIterator.reset();
-			gateReset(vars, c);
+			gateReset(vars, c, ctx);
 			for (; maxSol > 0 && modelIterator.isSatisfiable(); maxSol--) {
 				// System.err.println("findModel:"+maxSol);
-				IListWriter w = values.listWriter();
 				int[] m = modelIterator.model();
-				for (int z : m) {
-					int d = z < 0 ? -z : z;
-					if (int2str.get(d)!=null)
-						w.append(values.string((z < 0 ? "-" : "")
-								+ int2str.get(d)));
-					else w.append(values.string(String.valueOf(z)));
+				IListWriter w = values.listWriter();
+				for (String s : variables.keySet()) {
+					int[] g = variables.get(s);
+					boolean[] z = new boolean[width];
+					for (int i = 0; i < width; i++) {
+						System.err.println(s + ":" + g[i] + " "
+								+ modelIterator.model(g[i]));
+						z[i] = modelIterator.model(g[i]);
+					}
+					String v = lookupConstant(z);
+					w.append(values.string(s));
+					w.append(values.string(v));
 				}
+				
+				// for (int z : m) {
+				// int d = z < 0 ? -z : z;
+				// if (int2str.get(d) != null)
+				// w.append(values.string(int2str.get(d)));
+				// else
+				// w.append(values.string(String.valueOf(d)));
+				// w.append(values.string(z<0?"F":"T"));
+				// }
 				x.append(w.done());
 			}
 		} catch (ContradictionException e) {
@@ -270,7 +341,7 @@ public class SatProp {
 		boolean[] r = new boolean[width];
 		for (int i = 0; i < width; i++) {
 			r[i] = k % 2 == 1;
-			k = k/2;
+			k = k / 2;
 		}
 		return r;
 	}
@@ -279,7 +350,6 @@ public class SatProp {
 		int[] r = new int[width];
 		for (int i = 0; i < width; i++) {
 			int v = startVar + i;
-			System.err.println("varCode:"+v);
 			r[i] = v;
 		}
 		startVar += width;
@@ -295,11 +365,58 @@ public class SatProp {
 		}
 	}
 
+	public String lookupConstant(boolean[] varcode) {
+		for (String s : constantCode.keySet()) {
+			boolean[] q = constantCode.get(s);
+			int j = 0;
+			/*
+			 * System.err.println(s); for (j = 0; j < width; j++) {
+			 * System.err.print(varcode[j]); } System.err.println(); for (j = 0;
+			 * j < width; j++) { System.err.print(q[j]); } System.err.println();
+			 */
+			for (j = 0; j < width; j++) {
+				if (varcode[j] != q[j])
+					break;
+			}
+			if (j == width)
+				return s;
+		}
+		return "?";
+	}
+
 	public void addVariables(IList vnames, IEvaluatorContext ctx) {
 		variables.clear();
 		for (IValue v : vnames) {
 			variables.put(((IString) v).getValue(), varCode());
 		}
 	}
+
+	IConstructor computeDomainConstraint(IList cnames, IList vnames,
+			IEvaluatorContext ctx) {
+		ISetWriter h = values.setWriter();
+		for (IValue v : vnames) {
+			String vname = ((IString) v).getValue();
+			ISetWriter w = values.setWriter();
+			for (IValue c : cnames) {
+				String cname = ((IString) c).getValue();
+				w.insert(getEqConstructor(ctx, vname, cname));
+			}
+			h.insert(getOrConstructor(ctx, w.done()));
+		}
+		return getAndConstructor(ctx, h.done());
+	}
+
+	public void addBoundedVariables(IList cnames, IList vnames,
+			IEvaluatorContext ctx) {
+		addConstants(cnames, ctx);
+		addVariables(vnames, ctx);
+		domainConstraint = computeDomainConstraint(cnames, vnames, ctx);
+		System.err.println("Constraint:"+domainConstraint);
+	}
+
+	// and(
+	// or(eq("q", "aap"), eq("q","noot")),
+	// or(eq("r", "aap"), eq("r","noot"))
+	// ))
 
 }

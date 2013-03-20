@@ -78,7 +78,8 @@ CFGraph jon(list[CFGraph] CF) {
  
  public CFGraph cflowPrograms(PROGRAMS P){
     if (programs(list[PROGRAM] q):=P) 
-        return jon([cflowProgram(p)|p<-q]);
+        // return jon([cflowProgram(p)|p<-q]);
+        return cflowProgram(q[0]);
     return <{}, [], {}>;
     }   
 

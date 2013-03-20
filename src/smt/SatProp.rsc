@@ -26,3 +26,8 @@ public java void addConstants(list[str] constants);
 @javaClass{smt.SatProp}
 @reflect{Uses URI Resolver Registry}
 public java void addVariables(list[str] variables);
+
+
+@javaClass{smt.SatProp}
+@reflect{Uses URI Resolver Registry}
+public java void addBoundedVariables(list[str] constants, list[str] variables);
