@@ -21,13 +21,10 @@ public java list[list[str]] findModel(list[str] vars, Formula f, int maxSol);
 
 @javaClass{smt.SatProp}
 @reflect{Uses URI Resolver Registry}
-public java void addConstants(list[str] constants);
+public java void addVariables(str domainName, str vars...);
+
+
 
 @javaClass{smt.SatProp}
 @reflect{Uses URI Resolver Registry}
-public java void addVariables(list[str] variables);
-
-
-@javaClass{smt.SatProp}
-@reflect{Uses URI Resolver Registry}
-public java void addBoundedVariables(list[str] constants, list[str] variables);
+public java void addSignature(str name, str vals...);

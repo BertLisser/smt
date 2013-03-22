@@ -6,16 +6,16 @@ import smt::SatProp;
 
 // Formula f = \if(\not(v("y")), \not(v("x")));
 
-Formula f = eq("q", "noot");
-Formula g = eq("r", "aap");
+Formula f = equ("q", "noot");
+Formula g = equ("r", "aap");
 
 Formula R =  or( 
-      {and(eq("z","aap"), eq("z1","noot"))
-      ,and(eq("z","noot"), eq("z1","mies"))
+      {and(equ("pc1","l1"), equ("pc.1","NC1"))
+      ,and(equ("pc2","l2"), equ("pc.2","NC2"))
       }
       );
 
-Formula rch = and(eq("z","aap"), R);
+Formula rch = and(equ("pc1","l1"), R);
 
 /*
 Formula f = \and(
@@ -27,7 +27,11 @@ Formula f = \and(
 
 
 public void main() {
-     addBoundedVariables(["aap", "noot","mies"], ["z", "z1"]);
+     addSignature("P1", "l1", "CR1", "NC1");
+     addSignature("P2", "l2", "CR2", "NC2");
+     addVariables("P1", "pc1", "pc.1");
+     addVariables("P2", "pc2", "pc.2");
+     // addBoundedVariables(["aap", "noot","mies"], ["z", "z1"]);
      println("TEST:<findModel([], rch, 10)>");
     /* , and(
      or(eq("q", "aap"), eq("q","noot")),

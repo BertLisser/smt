@@ -48,12 +48,12 @@ public class SatProp {
 	private ModelIterator modelIterator = new ModelIterator(solver);
 	private HashMap<String, Integer> str2int = new HashMap<String, Integer>();
 	private HashMap<Integer, String> int2str = new HashMap<Integer, String>();
-	final private HashMap<String, boolean[]> constantCode = new HashMap<String, boolean[]>();
 	final private HashMap<String, int[]> constants = new HashMap<String, int[]>();
-	final private HashMap<String, int[]> variables = new HashMap<String, int[]>();
+	final private HashMap<String, String> variables = new HashMap<String, String>();
 	private int startVar = 1;
 	private int freeVar = 0;
-	IConstructor domainConstraint;
+	private HashMap<String, HashMap<String, boolean[]>> domainElm = new HashMap<String, HashMap<String, boolean[]>>();
+	private HashMap<String, HashMap<String, int[]>> domainVar = new HashMap<String, HashMap<String, int[]>>();
 
 	IConstructor getAndConstructor(IEvaluatorContext ctx, IValue... args) {
 		ISetWriter w = values.setWriter();
@@ -93,7 +93,7 @@ public class SatProp {
 
 	IConstructor getEqConstructor(IEvaluatorContext ctx, String varName,
 			String constName) {
-		Set<Type> cs = ctx.getCurrentEnvt().lookupConstructors("eq");
+		Set<Type> cs = ctx.getCurrentEnvt().lookupConstructors("equ");
 		for (Type t : cs) {
 			if (t.isConstructorType() && t.getArity() == 2) {
 				IString var = values.string(varName);
@@ -164,10 +164,11 @@ public class SatProp {
 			gateTranslator.gateFalse(fv);
 		else if (c.getName().equals("true"))
 			gateTranslator.gateTrue(fv);
-		else if (c.getName().equals("eq")) {
+		else if (c.getName().equals("equ")) {
 			String vname = ((IString) c.get(0)).getValue();
 			String cname = ((IString) c.get(1)).getValue();
-			int[] var = variables.get(vname);
+			String domain = variables.get(vname);
+			int[] var = domainVar.get(domain).get(vname);
 			int[] consts = constants.get(cname);
 			VecInt w = new VecInt(var.length);
 			for (int i = 0; i < var.length; i++) {
@@ -224,19 +225,25 @@ public class SatProp {
 		gateTranslator.newVar(vars.length() + 100);
 		freeVar = startVar;
 		constants.clear();
-		for (String s : constantCode.keySet()) {
-			boolean[] code = constantCode.get(s);
-			int[] r = new int[width];
-			int i = 0;
-			for (boolean g : code) {
-				if (g)
-					gateTranslator.gateTrue(freeVar);
-				else
-					gateTranslator.gateFalse(freeVar);
-				r[i++] = freeVar;
-				freeVar++;
+		ISetWriter w = values.setWriter();
+		for (String domainName : domainElm.keySet()) {
+			Set<String> cs = domainElm.get(domainName).keySet();
+			Set<String> vs = domainVar.get(domainName).keySet();
+			for (String s : cs) {
+				boolean[] code = domainElm.get(domainName).get(s);
+				int[] r = new int[width];
+				int i = 0;
+				for (boolean g : code) {
+					if (g)
+						gateTranslator.gateTrue(freeVar);
+					else
+						gateTranslator.gateFalse(freeVar);
+					r[i++] = freeVar;
+					freeVar++;
+				}
+				constants.put(s, r);
 			}
-			constants.put(s, r);
+			w.insert(computeDomainConstraint(cs, vs, ctx));
 		}
 		str2int.clear();
 		int2str.clear();
@@ -245,9 +252,21 @@ public class SatProp {
 			int2str.put(freeVar, ((IString) v).getValue());
 			freeVar++;
 		}
-		if (domainConstraint != null)
-			c = getAndConstructor(ctx, c, domainConstraint);
+		c = getAndConstructor(ctx, c, w.done());
 		gateTranslator.gateTrue(createGate(c));
+	}
+
+	private IConstructor computeDomainConstraint(Set<String> cnames,
+			Set<String> vnames, IEvaluatorContext ctx) {
+		ISetWriter h = values.setWriter();
+		for (String v : vnames) {
+			ISetWriter w = values.setWriter();
+			for (String c : cnames) {
+				w.insert(getEqConstructor(ctx, v, c));
+			}
+			h.insert(getOrConstructor(ctx, w.done()));
+		}
+		return getAndConstructor(ctx, h.done());
 	}
 
 	public IBool isSatisfiable(IList vars, IConstructor c, IEvaluatorContext ctx) {
@@ -302,7 +321,7 @@ public class SatProp {
 				int[] m = modelIterator.model();
 				IListWriter w = values.listWriter();
 				for (String s : variables.keySet()) {
-					int[] g = variables.get(s);
+					int[] g = domainVar.get(variables.get(s)).get(s);
 					boolean[] z = new boolean[width];
 					for (int i = 0; i < width; i++) {
 						System.err.println(s + ":" + g[i] + " "
@@ -313,7 +332,7 @@ public class SatProp {
 					w.append(values.string(s));
 					w.append(values.string(v));
 				}
-				
+
 				// for (int z : m) {
 				// int d = z < 0 ? -z : z;
 				// if (int2str.get(d) != null)
@@ -356,67 +375,57 @@ public class SatProp {
 		return r;
 	}
 
-	public void addConstants(IList cnames, IEvaluatorContext ctx) {
+	private HashMap<String, boolean[]> getConstructors(IList cnames) {
+		final HashMap<String, boolean[]> hm = new HashMap<String, boolean[]>();
 		int k = 0;
-		constantCode.clear();
 		for (IValue v : cnames) {
-			constantCode.put(((IString) v).getValue(), boolCode(k));
+			hm.put(((IString) v).getValue(), boolCode(k));
 			k++;
 		}
+		return hm;
 	}
 
 	public String lookupConstant(boolean[] varcode) {
-		for (String s : constantCode.keySet()) {
-			boolean[] q = constantCode.get(s);
-			int j = 0;
-			/*
-			 * System.err.println(s); for (j = 0; j < width; j++) {
-			 * System.err.print(varcode[j]); } System.err.println(); for (j = 0;
-			 * j < width; j++) { System.err.print(q[j]); } System.err.println();
-			 */
-			for (j = 0; j < width; j++) {
-				if (varcode[j] != q[j])
-					break;
+		for (String domainName : domainElm.keySet()) {
+			for (String s : domainElm.get(domainName).keySet()) {
+				boolean[] q = domainElm.get(domainName).get(s);
+				int j = 0;
+				/*
+				 * System.err.println(s); for (j = 0; j < width; j++) {
+				 * System.err.print(varcode[j]); } System.err.println(); for (j
+				 * = 0; j < width; j++) { System.err.print(q[j]); }
+				 * System.err.println();
+				 */
+				for (j = 0; j < width; j++) {
+					if (varcode[j] != q[j])
+						break;
+				}
+				if (j == width)
+					return s;
 			}
-			if (j == width)
-				return s;
 		}
 		return "?";
-	}
-
-	public void addVariables(IList vnames, IEvaluatorContext ctx) {
-		variables.clear();
-		for (IValue v : vnames) {
-			variables.put(((IString) v).getValue(), varCode());
-		}
-	}
-
-	IConstructor computeDomainConstraint(IList cnames, IList vnames,
-			IEvaluatorContext ctx) {
-		ISetWriter h = values.setWriter();
-		for (IValue v : vnames) {
-			String vname = ((IString) v).getValue();
-			ISetWriter w = values.setWriter();
-			for (IValue c : cnames) {
-				String cname = ((IString) c).getValue();
-				w.insert(getEqConstructor(ctx, vname, cname));
-			}
-			h.insert(getOrConstructor(ctx, w.done()));
-		}
-		return getAndConstructor(ctx, h.done());
-	}
-
-	public void addBoundedVariables(IList cnames, IList vnames,
-			IEvaluatorContext ctx) {
-		addConstants(cnames, ctx);
-		addVariables(vnames, ctx);
-		domainConstraint = computeDomainConstraint(cnames, vnames, ctx);
-		System.err.println("Constraint:"+domainConstraint);
 	}
 
 	// and(
 	// or(eq("q", "aap"), eq("q","noot")),
 	// or(eq("r", "aap"), eq("r","noot"))
 	// ))
+
+	public void addSignature(IString name, IList vals, IEvaluatorContext ctx) {
+		HashMap<String, boolean[]> constructors = getConstructors(vals);
+		domainElm.put(name.getValue(), constructors);
+	}
+
+	public void addVariables(IString name, IList vnames, IEvaluatorContext ctx) {
+		HashMap<String, int[]> var = domainVar.get(name);
+		if (var == null)
+			var = new HashMap<String, int[]>();
+		for (IValue v : vnames) {
+			var.put(((IString) v).getValue(), varCode());
+			variables.put(((IString) v).getValue(), name.getValue());
+		}
+		domainVar.put(name.getValue(), var);
+	}
 
 }
