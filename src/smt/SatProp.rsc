@@ -18,6 +18,10 @@ public java bool isSatisfiable(list[str] vars, Formula f);
 @reflect{Uses URI Resolver Registry}
 public java list[map[str, str]] findModel(list[str] vars, Formula f, int maxSol);
 
+@javaClass{smt.SatProp}
+@reflect{Uses URI Resolver Registry}
+public java list[map[str, str]] findModel(list[str] vars, map[str, str] assumpts, Formula f, int maxSol);
+
 
 @javaClass{smt.SatProp}
 @reflect{Uses URI Resolver Registry}

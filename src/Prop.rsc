@@ -9,13 +9,10 @@ import smt::SatProp;
 Formula f = equ("q", "noot");
 Formula g = equ("r", "aap");
 
-Formula R =  and(or( 
+Formula R =  or( 
       {and({equ("pc1","l1"), equ("pc.1","NC1"), equ("pc2", "pc.2")})
       ,and({equ("pc2","l2"), equ("pc.2","NC2"), equ("pc1", "pc.1")})
       }
-      )
-      , and(({equ("pc1","l1"), equ("pc2","l2")})
-      )
       )
       ;
 
@@ -36,7 +33,8 @@ public void main() {
      addVariables("P1", "pc1", "pc.1");
      addVariables("P2", "pc2", "pc.2");
      // addBoundedVariables(["aap", "noot","mies"], ["z", "z1"]);
-     println("TEST:<findModel([], rch, 10)>");
+     list[map[str, str]] r = findModel([], ("pc1":"l1", "pc2":"l2"), rch, 10);
+     println("TEST:<r>");
     /* , and(
      or(eq("q", "aap"), eq("q","noot")),
      or(eq("r", "aap"), eq("r","noot"))

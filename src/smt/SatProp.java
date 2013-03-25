@@ -38,6 +38,7 @@ import org.sat4j.core.VecInt;
 import org.sat4j.minisat.SolverFactory;
 import org.sat4j.specs.ContradictionException;
 import org.sat4j.specs.ISolver;
+import org.sat4j.specs.IVecInt;
 import org.sat4j.specs.TimeoutException;
 import org.sat4j.tools.GateTranslator;
 import org.sat4j.tools.ModelIterator;
@@ -169,10 +170,12 @@ public class SatProp {
 		else if (c.getName().equals("equ")) {
 			String vname1 = ((IString) c.get(0)).getValue();
 			String domain1 = variables.get(vname1);
-			int[] var1 = domain1==null?constants.get(vname1):domainVar.get(domain1).get(vname1);
+			int[] var1 = domain1 == null ? constants.get(vname1) : domainVar
+					.get(domain1).get(vname1);
 			String vname2 = ((IString) c.get(1)).getValue();
 			String domain2 = variables.get(vname2);
-			int[] var2 = domain2==null?constants.get(vname2):domainVar.get(domain2).get(vname2);
+			int[] var2 = domain2 == null ? constants.get(vname2) : domainVar
+					.get(domain2).get(vname2);
 			VecInt w = new VecInt(var1.length);
 			for (int i = 0; i < var1.length; i++) {
 				int fw = (freeVar++);
@@ -229,7 +232,7 @@ public class SatProp {
 		freeVar = startVar;
 		constants.clear();
 		ISetWriter w = values.setWriter();
-		System.err.println("gateReset"+domainElm.keySet().size());
+		System.err.println("gateReset" + domainElm.keySet().size());
 		for (String domainName : domainElm.keySet()) {
 			Set<String> cs = domainElm.get(domainName).keySet();
 			Set<String> vs = domainVar.get(domainName).keySet();
@@ -272,7 +275,7 @@ public class SatProp {
 			h.insert(getOrConstructor(ctx, w.done()));
 		}
 		IConstructor r = getAndConstructor(ctx, h.done());
-		System.err.println("cdc:"+r);
+		System.err.println("cdc:" + r);
 		return r;
 	}
 
@@ -316,14 +319,32 @@ public class SatProp {
 		return x.done();
 	}
 
-	public IList findModel(IList vars, IConstructor c, IInteger maxSolutions,
-			IEvaluatorContext ctx) {
+	private IVecInt varName2Code(IMap assumpts) {
+		VecInt w = new VecInt(10 * width);
+		if (assumpts != null)
+			for (IValue v : assumpts) {
+				IString s = (IString) v;
+				int[] r = domainVar.get(variables.get(s.getValue())).get(s.getValue());
+				boolean[] val = domainElm.get(variables.get(s.getValue())).get(
+						((IString) assumpts.get(s)).getValue());
+				System.err.println(r);
+				System.err.println(val);
+				for (int i = 0; i < width; i++) {
+					w.push(val[i] ? r[i] : -r[i]);
+				}
+			}
+		return w;
+	}
+
+	public IList findModel(IList vars, IMap assumpts, IConstructor c,
+			IInteger maxSolutions, IEvaluatorContext ctx) {
 		int maxSol = maxSolutions.intValue();
 		IListWriter x = values.listWriter();
 		try {
 			modelIterator.reset();
 			gateReset(vars, c, ctx);
-			for (; maxSol > 0 && modelIterator.isSatisfiable(); maxSol--) {
+			for (; maxSol > 0
+					&& modelIterator.isSatisfiable(varName2Code(assumpts)); maxSol--) {
 				// System.err.println("findModel:"+maxSol);
 				int[] m = modelIterator.model();
 				IMapWriter w = values.mapWriter();
@@ -331,8 +352,8 @@ public class SatProp {
 					int[] g = domainVar.get(variables.get(s)).get(s);
 					boolean[] z = new boolean[width];
 					for (int i = 0; i < width; i++) {
-//						System.err.println(s + ":" + g[i] + " "
-//								+ modelIterator.model(g[i]));
+						// System.err.println(s + ":" + g[i] + " "
+						// + modelIterator.model(g[i]));
 						z[i] = modelIterator.model(g[i]);
 					}
 					String v = lookupConstant(variables.get(s), z);
@@ -360,6 +381,11 @@ public class SatProp {
 			e.printStackTrace();
 		}
 		return x.done();
+	}
+
+	public IList findModel(IList vars, IConstructor c, IInteger maxSolutions,
+			IEvaluatorContext ctx) {
+		return findModel(vars, null, c, maxSolutions, ctx);
 	}
 
 	private boolean[] boolCode(int k) {
@@ -392,21 +418,20 @@ public class SatProp {
 	}
 
 	public String lookupConstant(String domainName, boolean[] varcode) {
-			for (String s : domainElm.get(domainName).keySet()) {
-				boolean[] q = domainElm.get(domainName).get(s);
-				int j = 0;
-				/*
-				 * System.err.println(s); for (j = 0; j < width; j++) {
-				 * System.err.print(varcode[j]); } System.err.println(); for (j
-				 * = 0; j < width; j++) { System.err.print(q[j]); }
-				 * System.err.println();
-				 */
-				for (j = 0; j < width; j++) {
-					if (varcode[j] != q[j])
-						break;
-				}
-				if (j == width)
-					return s;
+		for (String s : domainElm.get(domainName).keySet()) {
+			boolean[] q = domainElm.get(domainName).get(s);
+			int j = 0;
+			/*
+			 * System.err.println(s); for (j = 0; j < width; j++) {
+			 * System.err.print(varcode[j]); } System.err.println(); for (j = 0;
+			 * j < width; j++) { System.err.print(q[j]); } System.err.println();
+			 */
+			for (j = 0; j < width; j++) {
+				if (varcode[j] != q[j])
+					break;
+			}
+			if (j == width)
+				return s;
 		}
 		return "?";
 	}
