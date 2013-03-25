@@ -23,6 +23,8 @@ import org.eclipse.imp.pdb.facts.IBool;
 import org.eclipse.imp.pdb.facts.IConstructor;
 import org.eclipse.imp.pdb.facts.IInteger;
 import org.eclipse.imp.pdb.facts.IList;
+import org.eclipse.imp.pdb.facts.IMap;
+import org.eclipse.imp.pdb.facts.IMapWriter;
 import org.eclipse.imp.pdb.facts.ISet;
 import org.eclipse.imp.pdb.facts.ISetWriter;
 import org.eclipse.imp.pdb.facts.IString;
@@ -165,17 +167,18 @@ public class SatProp {
 		else if (c.getName().equals("true"))
 			gateTranslator.gateTrue(fv);
 		else if (c.getName().equals("equ")) {
-			String vname = ((IString) c.get(0)).getValue();
-			String cname = ((IString) c.get(1)).getValue();
-			String domain = variables.get(vname);
-			int[] var = domainVar.get(domain).get(vname);
-			int[] consts = constants.get(cname);
-			VecInt w = new VecInt(var.length);
-			for (int i = 0; i < var.length; i++) {
+			String vname1 = ((IString) c.get(0)).getValue();
+			String domain1 = variables.get(vname1);
+			int[] var1 = domain1==null?constants.get(vname1):domainVar.get(domain1).get(vname1);
+			String vname2 = ((IString) c.get(1)).getValue();
+			String domain2 = variables.get(vname2);
+			int[] var2 = domain2==null?constants.get(vname2):domainVar.get(domain2).get(vname2);
+			VecInt w = new VecInt(var1.length);
+			for (int i = 0; i < var1.length; i++) {
 				int fw = (freeVar++);
 				VecInt v = new VecInt(2);
-				v.push(var[i]);
-				v.push(consts[i]);
+				v.push(var1[i]);
+				v.push(var2[i]);
 				gateTranslator.iff(fw, v);
 				w.push(fw);
 			}
@@ -226,6 +229,7 @@ public class SatProp {
 		freeVar = startVar;
 		constants.clear();
 		ISetWriter w = values.setWriter();
+		System.err.println("gateReset"+domainElm.keySet().size());
 		for (String domainName : domainElm.keySet()) {
 			Set<String> cs = domainElm.get(domainName).keySet();
 			Set<String> vs = domainVar.get(domainName).keySet();
@@ -252,7 +256,8 @@ public class SatProp {
 			int2str.put(freeVar, ((IString) v).getValue());
 			freeVar++;
 		}
-		c = getAndConstructor(ctx, c, w.done());
+		w.insert(c);
+		c = getAndConstructor(ctx, w.done());
 		gateTranslator.gateTrue(createGate(c));
 	}
 
@@ -266,7 +271,9 @@ public class SatProp {
 			}
 			h.insert(getOrConstructor(ctx, w.done()));
 		}
-		return getAndConstructor(ctx, h.done());
+		IConstructor r = getAndConstructor(ctx, h.done());
+		System.err.println("cdc:"+r);
+		return r;
 	}
 
 	public IBool isSatisfiable(IList vars, IConstructor c, IEvaluatorContext ctx) {
@@ -319,18 +326,17 @@ public class SatProp {
 			for (; maxSol > 0 && modelIterator.isSatisfiable(); maxSol--) {
 				// System.err.println("findModel:"+maxSol);
 				int[] m = modelIterator.model();
-				IListWriter w = values.listWriter();
+				IMapWriter w = values.mapWriter();
 				for (String s : variables.keySet()) {
 					int[] g = domainVar.get(variables.get(s)).get(s);
 					boolean[] z = new boolean[width];
 					for (int i = 0; i < width; i++) {
-						System.err.println(s + ":" + g[i] + " "
-								+ modelIterator.model(g[i]));
+//						System.err.println(s + ":" + g[i] + " "
+//								+ modelIterator.model(g[i]));
 						z[i] = modelIterator.model(g[i]);
 					}
-					String v = lookupConstant(z);
-					w.append(values.string(s));
-					w.append(values.string(v));
+					String v = lookupConstant(variables.get(s), z);
+					w.put(values.string(s), values.string(v));
 				}
 
 				// for (int z : m) {
@@ -385,8 +391,7 @@ public class SatProp {
 		return hm;
 	}
 
-	public String lookupConstant(boolean[] varcode) {
-		for (String domainName : domainElm.keySet()) {
+	public String lookupConstant(String domainName, boolean[] varcode) {
 			for (String s : domainElm.get(domainName).keySet()) {
 				boolean[] q = domainElm.get(domainName).get(s);
 				int j = 0;
@@ -402,7 +407,6 @@ public class SatProp {
 				}
 				if (j == width)
 					return s;
-			}
 		}
 		return "?";
 	}

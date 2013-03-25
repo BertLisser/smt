@@ -9,11 +9,15 @@ import smt::SatProp;
 Formula f = equ("q", "noot");
 Formula g = equ("r", "aap");
 
-Formula R =  or( 
-      {and(equ("pc1","l1"), equ("pc.1","NC1"))
-      ,and(equ("pc2","l2"), equ("pc.2","NC2"))
+Formula R =  and(or( 
+      {and({equ("pc1","l1"), equ("pc.1","NC1"), equ("pc2", "pc.2")})
+      ,and({equ("pc2","l2"), equ("pc.2","NC2"), equ("pc1", "pc.1")})
       }
-      );
+      )
+      , and(({equ("pc1","l1"), equ("pc2","l2")})
+      )
+      )
+      ;
 
 Formula rch = and(equ("pc1","l1"), R);
 
