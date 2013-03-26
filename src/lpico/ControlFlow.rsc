@@ -13,7 +13,7 @@ public data CFNode                                                              
 
 alias CFGraph = tuple[set[CFNode] entry, Graph[CFNode] graph, set[CFNode] exit];  /*2*/
 
-CFGraph cflowStat(s:lstatement(PicoId id, asgStat(PicoId Id, EXP Exp))) {  
+Formula cflowStat(s:lstatement(PicoId id, asgStat(PicoId Id, EXP Exp))) {  
    if (lstatement(_, STATEMENT v):=s) {                              /*3*/
    S = statement(v@location, s);
    return <{S}, {}, {S}>;

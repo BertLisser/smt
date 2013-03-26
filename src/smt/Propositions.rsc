@@ -12,7 +12,7 @@ data Formula
   = \true()
   | \false()
   | v(str x)
-  | \equ(str \var, str \constant)
+  | \equ(str \var1, str \var2)
   | \not(Formula arg)
   | \and(Formula lhs, Formula rhs)
   | \and(set[Formula] args)

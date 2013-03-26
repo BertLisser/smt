@@ -48,7 +48,7 @@ public class SatProp {
 	private final IValueFactory values;
 	private ISolver solver = SolverFactory.newDefault();
 	private GateTranslator gateTranslator = new GateTranslator(solver);
-	private ModelIterator modelIterator = new ModelIterator(solver);
+	// private ModelIterator modelIterator = new ModelIterator(solver);
 	private HashMap<String, Integer> str2int = new HashMap<String, Integer>();
 	private HashMap<Integer, String> int2str = new HashMap<Integer, String>();
 	final private HashMap<String, int[]> constants = new HashMap<String, int[]>();
@@ -57,6 +57,7 @@ public class SatProp {
 	private int freeVar = 0;
 	private HashMap<String, HashMap<String, boolean[]>> domainElm = new HashMap<String, HashMap<String, boolean[]>>();
 	private HashMap<String, HashMap<String, int[]>> domainVar = new HashMap<String, HashMap<String, int[]>>();
+	private IConstructor theory;
 
 	IConstructor getAndConstructor(IEvaluatorContext ctx, IValue... args) {
 		ISetWriter w = values.setWriter();
@@ -298,7 +299,7 @@ public class SatProp {
 			IEvaluatorContext ctx) {
 		int maxSol = maxSolutions.intValue();
 		IListWriter x = values.listWriter();
-		modelIterator.reset();
+		ModelIterator modelIterator = new ModelIterator(solver);
 		solverReset(clauses);
 		try {
 			for (; maxSol > 0 && modelIterator.isSatisfiable(); maxSol--) {
@@ -335,14 +336,25 @@ public class SatProp {
 			}
 		return w;
 	}
+	
+	public void buildTheory(IConstructor c,
+			IEvaluatorContext ctx) {	
+//		try {
+//			gateReset(values.list(), c, ctx);
+//		} catch (ContradictionException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}	
+		theory = c;
+	}
 
-	public IList findModel(IList vars, IMap assumpts, IConstructor c,
+	public IList findModel(IMap assumpts, 
 			IInteger maxSolutions, IEvaluatorContext ctx) {
 		int maxSol = maxSolutions.intValue();
 		IListWriter x = values.listWriter();
 		try {
-			modelIterator.reset();
-			gateReset(vars, c, ctx);
+			gateReset(values.list(), theory, ctx);
+			ModelIterator modelIterator = new ModelIterator(solver);
 			for (; maxSol > 0
 					&& modelIterator.isSatisfiable(varName2Code(assumpts)); maxSol--) {
 				// System.err.println("findModel:"+maxSol);
@@ -359,33 +371,24 @@ public class SatProp {
 					String v = lookupConstant(variables.get(s), z);
 					w.put(values.string(s), values.string(v));
 				}
-
-				// for (int z : m) {
-				// int d = z < 0 ? -z : z;
-				// if (int2str.get(d) != null)
-				// w.append(values.string(int2str.get(d)));
-				// else
-				// w.append(values.string(String.valueOf(d)));
-				// w.append(values.string(z<0?"F":"T"));
-				// }
 				x.append(w.done());
 			}
-		} catch (ContradictionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (FactTypeUseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (TimeoutException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ContradictionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return x.done();
 	}
 
-	public IList findModel(IList vars, IConstructor c, IInteger maxSolutions,
+	public IList findModel( IInteger maxSolutions,
 			IEvaluatorContext ctx) {
-		return findModel(vars, null, c, maxSolutions, ctx);
+		return findModel((IMap) null, maxSolutions, ctx);
 	}
 
 	private boolean[] boolCode(int k) {

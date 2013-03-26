@@ -65,6 +65,8 @@ str getLabel(CFNode nod) {
    }
    
 map[tuple[str, str], int] getCode(list[tuple[str, str]] c) {
+   return (k:indexOf(c, k)|k<-c);
+   /*
    int i  = 0;
    map[tuple[str, str], int] r = ();
    for (k<-c) {
@@ -73,6 +75,7 @@ map[tuple[str, str], int] getCode(list[tuple[str, str]] c) {
    }
    // Fout in Rascal return (k:indexOf(c, k)|k<-c);
    return r;
+   */
    }
    
 public void visualize(Programs x , loc f) {
@@ -89,7 +92,7 @@ public void visualize(Programs x , loc f) {
      map[int, str] nodes = (idcf(k, l, code, var):labcf(k, input)|CFNode k<-carrier(CFG0.graph), CFNode l<-carrier(CFG1.graph));
      set[int] entries = {idcf(k, h, code, var)|CFNode k<-carrier(CFG0.graph), entry(_,_):=k, CFNode h<-carrier(CFG1.graph), entry(_,_):=h}
           ;
-     rel[int, int] r = {<idcf(g.from, h.from, code, var), idcf(g.to, h.from, code, var)>|g<-CFG0.graph, h<-CFG1.graph};
+     lrel[int, int] r = [<idcf(g.from, h.from, code, var), idcf(g.to, h.from, code, var)>|g<-CFG0.graph, h<-CFG1.graph];
      str labcf(int n) = "<for(v<-var){> <v>=<var[v]><}> <head(drop(n, labl))> <nodes[n]>";
      Kripke[int] M = <domain(nodes), entries, r, pred, labcf>;
      // println(toDot(M));
