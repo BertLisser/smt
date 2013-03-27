@@ -17,12 +17,8 @@ lexical WhitespaceAndComment
 start syntax Programs = programs: "cobegin" {Program ";"}* prgs "coend" ;
 
 syntax Program 
-   = program: "begin" Declarations decls {LabeledStatement  ";"}* body "end" ;
+   = program: "begin"  {LabeledStatement  ";"}* body "end" Id label;
 
-syntax Declarations 
-   = "declare" {Declaration ","}* decls ";" ;  
- 
-syntax Declaration = decl: Type tp Id id ":=" Expression ;
 
 syntax Type 
    = natural:"natural" 
@@ -42,15 +38,10 @@ syntax Statement
    
      
 syntax Expression 
-   = id: Id name
-   | strCon: String string
-   | natCon: Natural natcon
-   | bracket "(" Expression e ")"
-   > left eq: Expression lhs "=" Expression rhs
-   > left ( add: Expression lhs "+" Expression rhs
-          | sub: Expression lhs "-" Expression rhs
-          )
-  ;
+   = equal: Id lhs "=" Id rhs
+   | T: "T"
+   | F: "F"
+   ;
 
 public start[Program] program(str s) {
   return parse(#start[Program], s);

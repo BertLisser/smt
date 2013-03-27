@@ -1,7 +1,9 @@
 module smt::Kripke
 import IO;
+import Set;
 import lang::dot::Dot;
 import dotplugin::Display;
+
 
 alias Kripke[&T]=tuple[set[&T] s, set[&T] s0, rel[&T, &T] r ,bool(&T) l, str(&T) id];
 
@@ -24,8 +26,9 @@ rel[S, S] R = {<<1,1>,<0,1>>, <<0,1>,<1,1>>,
 Kripke[S] M = <s, s0, R, L, label>;
 
 public DotGraph toDot(Kripke[&T] m) {
-    list[Stm] stms = [N("<s>",[<"label", "<m.id(s)>">])|&T s<-m.s]
-    +[E("<r[0]>", "<r[1]>")|r<-m.r];
+    map[&T, int] q = (toList(m.s)[i]:i|i<-[0..size(m.s)]);
+    list[Stm] stms = [N("N<q[s]>",[<"label", "<m.id(s)>">])|&T s<-m.s]
+    +[E("N<q[r[0]]>", "N<q[r[1]]>")|r<-m.r];
     return digraph("kripke", stms);
     }
     

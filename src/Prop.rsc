@@ -66,5 +66,7 @@ public void main() {
      r = nextStates(["pc1","pc2"],["pc.1", "pc.2"], [["l1", "l2"]]);
      println("TEST:<r>");
      Kripke[list[str]] M = <doma(["l1", "CR1", "NC1"],["l2", "CR2", "NC2"]), {["l1","l2"]}, r, pred, labcf>;
-     dotDisplay(toDot(M)); 
+     DotGraph z = toDot(M);
+     println(z);
+     dotDisplay(z); 
 }

@@ -5,10 +5,12 @@ begin declare natural turn := 0;
           CR0: turn:=1
       od 
 end;
+L0'
 begin declare natural turn := 1; 
        L1: while True do 
           NC1: wait (turn = 1); 
           CR1: turn:=0
       od 
 end
+L1'
 coend

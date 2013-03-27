@@ -83,6 +83,7 @@ public void visualize(Programs x , loc f) {
    // println(x);
    PROGRAMS m = implode(#PROGRAMS, x);
    if (programs(list[PROGRAM] q):=m) {
+     println(q);
      CFGraph CFG0 = cflowProgram(q[0]);
      CFGraph CFG1 = cflowProgram(q[1]);
      list[tuple[str, str]] labl = [getLabel(k)|CFNode k<-carrier(CFG0.graph)]
@@ -92,7 +93,7 @@ public void visualize(Programs x , loc f) {
      map[int, str] nodes = (idcf(k, l, code, var):labcf(k, input)|CFNode k<-carrier(CFG0.graph), CFNode l<-carrier(CFG1.graph));
      set[int] entries = {idcf(k, h, code, var)|CFNode k<-carrier(CFG0.graph), entry(_,_):=k, CFNode h<-carrier(CFG1.graph), entry(_,_):=h}
           ;
-     lrel[int, int] r = [<idcf(g.from, h.from, code, var), idcf(g.to, h.from, code, var)>|g<-CFG0.graph, h<-CFG1.graph];
+     rel[int, int] r = {<idcf(g.from, h.from, code, var), idcf(g.to, h.from, code, var)>|g<-CFG0.graph, h<-CFG1.graph};
      str labcf(int n) = "<for(v<-var){> <v>=<var[v]><}> <head(drop(n, labl))> <nodes[n]>";
      Kripke[int] M = <domain(nodes), entries, r, pred, labcf>;
      // println(toDot(M));

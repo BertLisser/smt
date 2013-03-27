@@ -9,22 +9,17 @@ public data PROGRAMS =
 
 	  
 public data PROGRAM =                       /*3*/
-  program(list[DECL] decls, list[LSTATEMENT] lstats);
+  program(list[LSTATEMENT] lstats, str label);
 
-public data DECL =
-  decl(TYPE tp, PicoId name, EXP exp);
 
 public data EXP = 
-       id(PicoId name)
-     | natCon(int iVal)
-     | strCon(str sVal)
-     | add(EXP left, EXP right)
-     | sub(EXP left, EXP right)
-     | eq(EXP left, EXP right)
+     equal(PicoId left, PicoId right)
+     | T()
+     | F()
      ;
      
 public data LSTATEMENT =
-     lstatement(PicoId name, STATEMENT statement)
+     lstatement(PicoId name, STATEMENT statement, str label)
      ;
     
 public data STATEMENT =
