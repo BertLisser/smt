@@ -1,8 +1,7 @@
 module lpico::Abstract
 
 public data TYPE = natural() | string();    /*1*/
-	  
-public alias PicoId = str;                  /*2*/
+	                /*2*/
 
 public data PROGRAMS = 
   programs(list[PROGRAM] prgs);
@@ -10,20 +9,28 @@ public data PROGRAMS =
 	  
 public data PROGRAM =                       /*3*/
   program(list[LSTATEMENT] lstats, str label);
+  
+/*
+public data ATOM =
+    id(PicoId pid) 
+    |string(str s)
+    |natural(str d)
+    ;
+*/
 
 
-public data EXP = 
-     equal(PicoId left, PicoId right)
-     | T()
+public data EXP 
+     = T()
      | F()
+     | equal(str lhs, str rhs)
      ;
      
 public data LSTATEMENT =
-     lstatement(PicoId name, STATEMENT statement, str label)
+     lstatement(str name, STATEMENT statement)
      ;
     
 public data STATEMENT =
-       asgStat(PicoId name, EXP exp)
+       asgStat(str name, str atom)
      | ifElseStat(EXP exp, list[LSTATEMENT] thenPart, list[LSTATEMENT] elsePart)
      | whileStat(EXP exp, list[LSTATEMENT] lstats)
      | waitStat(EXP exp)
@@ -32,8 +39,7 @@ public data STATEMENT =
 anno loc TYPE@location;                   /*4*/
 anno loc PROGRAM@location;
 anno loc PROGRAMS@location;
-anno loc DECL@location;
 anno loc EXP@location;
 anno loc STATEMENT@location;
 
-public alias Occurrence = tuple[loc location, PicoId name, LSTATEMENT stat];  /*5*/
+public alias Occurrence = tuple[loc location, str name, LSTATEMENT stat];  /*5*/

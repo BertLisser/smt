@@ -5,6 +5,9 @@ import smt::Propositions;
 import smt::SatProp;
 import smt::Kripke;
 import lang::dot::Dot;
+import lpico::Abstract;
+import lpico::Syntax;
+import lpico::ControlEq;
 import dotplugin::Display;
 
 // Formula f = \if(\not(v("y")), \not(v("x")));
@@ -20,7 +23,7 @@ Formula R =  or(
       )
       ;
 
-Formula rch = R;
+// Formula rch = R;
 
 /*
 Formula f = \and(
@@ -49,23 +52,35 @@ bool pred(list[str] n) {
    }
 
 str labcf(list[str] n) {
-        return "Q:<n[0]> <n[1]>";
+        return "<n[0]> <n[1]> <n[2]>";
         }
         
 set[list[str]] doma(list[str] a, list[str] b) {
    return {[v[0], v[1]]|tuple[str, str] v<- a* b};
    }
+   
+ set[list[str]] doma(list[str] a, list[str] b, list[str] c) {
+   list[tuple[tuple[str, str], str]] g =  a* b *c;
+   return {[k[0][0], k[0][1], k[1]]|tuple[tuple[str, str], str] k  <- g};
+   }
 
 public void main() {
-     addSignature("P1", "l1", "CR1", "NC1");
-     addSignature("P2", "l2", "CR2", "NC2");
-     addVariables("P1", "pc1", "pc.1");
-     addVariables("P2", "pc2", "pc.2");
+     addSignature("P0", "L0", "CR0", "NC0", "L0.");
+     addSignature("P1", "L1", "CR1", "NC1", "L1.");
+     addSignature("D",  "V0", "V1");
+     addVariables("P0", "pc0", "pc0.");
+     addVariables("P1", "pc1", "pc1.");
+     addVariables("D", "turn", "turn.");
+     Programs p = parse(#Programs,|project://smt/src/lpico/test.lpic|);
+     // println(p);
+     PROGRAMS m = implode(#PROGRAMS, p);
+     Formula rch = cflowPrograms(m);
      buildTheory(rch);
      // addBoundedVariables(["aap", "noot","mies"], ["z", "z1"]);
-     r = nextStates(["pc1","pc2"],["pc.1", "pc.2"], [["l1", "l2"]]);
+     r = nextStates(["pc0","pc1","turn"],["pc0.", "pc1.", "turn."], [["L0", "L1","V0"],["L0", "L1","V1"]]);
      println("TEST:<r>");
-     Kripke[list[str]] M = <doma(["l1", "CR1", "NC1"],["l2", "CR2", "NC2"]), {["l1","l2"]}, r, pred, labcf>;
+     set[list[str]] d = doma(["L0", "CR0", "NC0","L0."],["L1", "CR1", "NC1", "L1."], ["V0", "V1"]);
+     Kripke[list[str]] M = <carrier(r),  {}, r, pred, labcf>;
      DotGraph z = toDot(M);
      println(z);
      dotDisplay(z); 

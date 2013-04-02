@@ -4,6 +4,7 @@ import smt::Kripke;
 import lang::dot::Dot;
 import dotplugin::Display;
 import lpico::Abstract;
+import lpico::ControlEq;
 import lpico::ControlFlow;
 import lpico::Syntax;
 import  analysis::graphs::Graph;
@@ -103,7 +104,8 @@ public void visualize(Programs x , loc f) {
    
 public void main() {
    Programs p = parse(#Programs,|project://smt/src/lpico/test.lpic|);
-   visualize(p, |file:///|);
+   println(p);
+   // visualize(p, |file:///|);
 }
 
 
