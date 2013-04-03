@@ -1,14 +1,14 @@
 cobegin
 begin 
        L0: while T do 
-          NC0: wait turn = V0; 
-          CR0: turn:=V1
+          NC0: wait turn = 0; 
+          CR0: turn:=1
       od 
 end L0.;
 begin 
        L1: while T do 
-          NC1: wait turn = V1; 
-          CR1: turn:=V0
+          NC1: wait turn = 1; 
+          CR1: turn:=0
       od 
 end
 L1.

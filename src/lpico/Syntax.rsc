@@ -2,8 +2,9 @@ module lpico::Syntax
 
 import Prelude;
 
-lexical Id  = [A-Za-z.] [A-Za-z0-9.]* !>> [A-Za-z0-9.];
-// lexical Id  = [a-z][a-z0-9]* !>> [a-z0-9];
+// lexical Id  = [A-Za-z.] [A-Za-z0-9.] !>> [A-Za-z0-9.];
+lexical Id  = [A-Za-z0-9.]+ !>> [A-Za-z0-9.];
+
 // lexical Natural = [0-9]+ ;
 // lexical String = "\"" ![\"]*  "\"";
 

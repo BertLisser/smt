@@ -3,7 +3,7 @@ module lpico::ControlEq
 import Prelude;
 import  analysis::graphs::Graph;
 import lpico::Abstract;
-import demo::lang::Pico::Load;
+// import demo::lang::Pico::Load;
 import smt::Propositions;
 
 
@@ -17,7 +17,9 @@ Formula same(set[str] vs) {
    }
 
 Formula cflowStat(str pc, s:lstatement(str id, asgStat(str Id, str Exp)), str label) {                              /*3*/
-   return and({equ("<pc>",id), equ("<pc>.", label), equ("<Id>.", "<Exp>"), same(variables-{"<pc>", "<Id>"})});
+   Formula r = and({equ("<pc>",id), equ("<pc>.", label), equ("<Id>.", "<Exp>"), same(variables-{"<pc>","<Id>"})});
+   println(r);
+   return r;
 }
 
 Formula cflowStat(str pc, lstatement(str id, ifElseStat(EXP Exp,                                             /*4*/
@@ -26,8 +28,8 @@ Formula cflowStat(str pc, lstatement(str id, ifElseStat(EXP Exp,                
                                Formula c = \true();
    Formula c = \true();
    Formula r = \false();
-   if (equal(str l, str r):=Exp) {
-      c = equ(l, r);  
+   if (equal(str l, str d):=Exp) {
+      c = equ(l, d);  
    }
    if (lstatement(str id1, _):=head(Stats1) && size(Stats2)==0) {
     r = or(\and({c, equ("<pc>", "<id>"),equ("<pc>.", "<id1>")}),
@@ -44,19 +46,20 @@ Formula cflowStat(str pc, lstatement(str id, ifElseStat(EXP Exp,                
 Formula cflowStat(str pc, lstatement(str id, whileStat(EXP Exp, list[LSTATEMENT] Stats)), str label) { 
    Formula c = \true();
    if (equal(str l, str r):=Exp) {
+      println("whileStat:<Exp>");
       c = equ(l, r);  
    }
    Formula r;
    if (size(Stats)==0)
-      r = or(\and({c, equ("<pc>", "<id>"),equ("<pc>.", "<id>")}),
-             \and({not(c), equ("<pc>", "<id>"),equ("<pc>.", "<label>")})); 
+      r = or(\and({c, equ("<pc>", "<id>"),equ("<pc>.", "<id>"), same(variables-{"<pc>"})}),
+             \and({not(c), equ("<pc>", "<id>"),equ("<pc>.", "<label>"), same(variables-{"<pc>"})})); 
    else {
       if (lstatement(str id1, _):=head(Stats)) {
-          r = or(\and({c, equ("<pc>", "<id>"),equ("<pc>.", "<id1>")}),
-             \and({not(c), equ("<pc>", "<id>"),equ("<pc>.", "<label>")})); 
+          r = or(\and({c, equ("<pc>", "<id>"),equ("<pc>.", "<id1>"), same(variables-{"<pc>"})}),
+             \and({not(c), equ("<pc>", "<id>"),equ("<pc>.", "<label>"), same(variables-{"<pc>"})})); 
           }
       }
-   return or(r, cflowStats(pc, Stats, label));      
+   return or(r, cflowStats(pc, Stats, id));      
 }
 
 Formula cflowStat(str pc, lstatement(str id, waitStat(EXP Exp)), str label) { 

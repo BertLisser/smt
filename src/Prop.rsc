@@ -6,6 +6,7 @@ import smt::SatProp;
 import smt::Kripke;
 import lang::dot::Dot;
 import lpico::Abstract;
+// import A;
 import lpico::Syntax;
 import lpico::ControlEq;
 import dotplugin::Display;
@@ -40,7 +41,7 @@ rel[list[str], list[str]] nextState(list[str] f, list[str] t, list[str] v) {
    return {<v, [k[g]|str g<-t]>|map[str, str] k<-m};
 }
 
-rel[list[str], list[str]] nextStates(list[str] f, list[str] t, list[list[str]] v) {
+rel[list[str], list[str]] nextStates(list[str] f, list[str] t, set[list[str]] v) {
   rel[list[str], list[str]] r = {};
   for (list[str] w<-v)
      r+= nextState(f, t, w);
@@ -63,25 +64,44 @@ set[list[str]] doma(list[str] a, list[str] b) {
    list[tuple[tuple[str, str], str]] g =  a* b *c;
    return {[k[0][0], k[0][1], k[1]]|tuple[tuple[str, str], str] k  <- g};
    }
+   
+set[list[str]] newStates(map[list[str], int] visited, rel[list[str], list[str]] r) {
+   set[list[str]] nxt = range(r);
+   set[list[str]] nw = {x|list[str] x <- nxt, x notin visited};
+   return nw;
+   }
+   
+rel[list[str], list[str]] generate() {
+   set[list[str]] q = {["L0", "L1","0"], ["L0", "L1","1"]};
+   rel[list[str], list[str]] r = {};
+   map[list[str], int] visited = ();
+   while (!isEmpty(q)) {
+         rel[list[str], list[str]] t =  nextStates(["pc0","pc1","turn"],["pc0.", "pc1.", "turn."], q);
+         r+=t;
+         q = newStates(visited, t);
+         for (list[str] s <- q) {
+             visited[s]= size(visited);
+             }
+     }
+   return r;
+   }
 
 public void main() {
      addSignature("P0", "L0", "CR0", "NC0", "L0.");
      addSignature("P1", "L1", "CR1", "NC1", "L1.");
-     addSignature("D",  "V0", "V1");
+     addSignature("D",  "0", "1");
      addVariables("P0", "pc0", "pc0.");
      addVariables("P1", "pc1", "pc1.");
      addVariables("D", "turn", "turn.");
      Programs p = parse(#Programs,|project://smt/src/lpico/test.lpic|);
-     // println(p);
      PROGRAMS m = implode(#PROGRAMS, p);
      Formula rch = cflowPrograms(m);
      buildTheory(rch);
-     // addBoundedVariables(["aap", "noot","mies"], ["z", "z1"]);
-     r = nextStates(["pc0","pc1","turn"],["pc0.", "pc1.", "turn."], [["L0", "L1","V0"],["L0", "L1","V1"]]);
+     rel[list[str], list[str]] r = generate();
      println("TEST:<r>");
-     set[list[str]] d = doma(["L0", "CR0", "NC0","L0."],["L1", "CR1", "NC1", "L1."], ["V0", "V1"]);
+     // set[list[str]] d = doma(["L0", "CR0", "NC0","L0."],["L1", "CR1", "NC1", "L1."], ["0", "1"]);
      Kripke[list[str]] M = <carrier(r),  {}, r, pred, labcf>;
      DotGraph z = toDot(M);
-     println(z);
+     // println(z);
      dotDisplay(z); 
 }

@@ -18,6 +18,8 @@ public data ATOM =
     ;
 */
 
+alias PicoId = str;
+
 
 public data EXP 
      = T()
@@ -30,7 +32,7 @@ public data LSTATEMENT =
      ;
     
 public data STATEMENT =
-       asgStat(str name, str atom)
+       asgStat(PicoId name, PicoId atom)
      | ifElseStat(EXP exp, list[LSTATEMENT] thenPart, list[LSTATEMENT] elsePart)
      | whileStat(EXP exp, list[LSTATEMENT] lstats)
      | waitStat(EXP exp)
