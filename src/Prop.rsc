@@ -10,6 +10,8 @@ import lpico::Abstract;
 import lpico::Syntax;
 import lpico::ControlEq;
 import dotplugin::Display;
+import vis::Figure;
+import vis::Render;
 
 // Formula f = \if(\not(v("y")), \not(v("x")));
 
@@ -48,13 +50,13 @@ rel[list[str], list[str]] nextStates(list[str] f, list[str] t, set[list[str]] v)
   return r;
 }
 
-bool pred(list[str] n) {
-   return true;
+int pred(list[str] n) {
+   return toInt(n[2]);
    }
 
 str labcf(list[str] n) {
-        return "<n[0]> <n[1]> <n[2]>";
-        }
+   return "<n[0]> <n[1]> <n[2]>";
+   }
         
 set[list[str]] doma(list[str] a, list[str] b) {
    return {[v[0], v[1]]|tuple[str, str] v<- a* b};
@@ -101,7 +103,9 @@ public void main() {
      println("TEST:<r>");
      // set[list[str]] d = doma(["L0", "CR0", "NC0","L0."],["L1", "CR1", "NC1", "L1."], ["0", "1"]);
      Kripke[list[str]] M = <carrier(r),  {}, r, pred, labcf>;
-     DotGraph z = toDot(M);
-     // println(z);
+     // DotGraph z = toDot(M);
+     DotGraph z = toDot(M, pred);
      dotDisplay(z); 
+     // Figure f = toFig(M);
+     // render(f);
 }
