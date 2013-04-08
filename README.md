@@ -6,7 +6,9 @@ is:
 * create a Rascal project
 * edit the MANIFEST to add a dependency on the rascal-eclipse plugin
 * create a plugin.xml file which mentions the rascalLibrary plugin (no
-attributes or parameters)
+   attributes or parameters)
+   The content: 
+   <extension point="rascal_eclipse.rascalLibrary"> </extension>
 * make sure the new project is active in your run-time configuration for
 the second level
 * start a second level
